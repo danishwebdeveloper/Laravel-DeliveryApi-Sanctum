@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Traits\ApiResponser;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ProductController extends Controller
 {
+    use ApiResponser;
     /**
      * Display a listing of the resource.
      *
@@ -14,7 +17,8 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Product::all();
+        $product = Product::all();
+        return $this->successResponse($product);
     }
 
     /**
@@ -25,14 +29,15 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        // Do more validations later
-        $request->validate([
-            'ItemName' => 'required|alpha|max:20',         // Item name should be aplhabetic and not exceed 20 character(based on requirment)
-            'ItemPrice' => 'required|numeric|min:0.10',   // Price should be Numeric and Price always greater than at least 0.10(Based on Condition)
-            'ItemProperties' => 'required|json',        // should be an Valid JSON String
-        ]);
 
-        return Product::create($request->all());
+        $rules = [
+            'ItemName' => 'required|alpha|max:20',
+            'ItemPrice' => 'required|numeric|min:0.10',
+            'ItemProperties' => 'required|json',
+        ];
+        $this->validate($request, $rules);
+        $product = Product::create($request->all());
+        return $this->successResponse($product, Response::HTTP_CREATED);
     }
 
     /**
@@ -43,7 +48,8 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        return Product::find($id);
+        $product = Product::findOrFail($id);
+        return $this->successResponse($product);
     }
 
     /**
@@ -55,9 +61,22 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
+
+        $rules = [
+            'ItemName' => 'alpha|max:20',
+            'ItemPrice' => 'numeric|min:0.10',
+            'ItemProperties' => 'json',
+        ];
+        $this->validate($request, $rules);
+
+        $product = Product::findOrFail($id);
+        $product->fill($request->all());
+        if ($product->isClean()) {
+            return $this->errorResponse("At least one Field should be changed, Thanks!", Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $product->update($request->all());
-        return $product;
+        return $this->successResponse($product);
     }
 
     /**
@@ -68,6 +87,9 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        return Product::destroy($id);
+        $product = Product::findOrFail($id);
+        $product->delete();
+        return $this->successResponse($product);
+
     }
 }

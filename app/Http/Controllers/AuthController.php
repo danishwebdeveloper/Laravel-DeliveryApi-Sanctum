@@ -9,17 +9,22 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // User Register
-    public function register(Request $request){
 
-        // Validation while Registration
+    public function index()
+    {
+        $users = User::all();
+        return response($users);
+    }
+
+    public function register(Request $request)
+    {
+
         $fields = $request->validate([
-            'name' => 'required|alpha',                       // Name should be aplhabetic
-            'email' => 'required|email|unique:users,email',  // Email should be unique and Valid Email Address
-            'password' => 'required|min:6|confirmed',       // Minimum 6 digits(Bases on Requirment)
+            'name' => 'required|alpha',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:6|confirmed',
         ]);
 
-        // Create the User
         $user = User::create([
             'name' => $fields['name'],
             'email' => $fields['email'],
@@ -29,51 +34,46 @@ class AuthController extends Controller
         // Create Token
         $token = $user->createToken('simplydeliverytoken')->plainTextToken;
 
-        // Response
         $reponse = [
             'user' => $user,
             'token' => $token,
         ];
 
-        // Return the response after register with status code of 201
         return response($reponse, 201);
     }
 
-    // User Login and Validations
-    public function login(Request $request){
+    public function login(Request $request)
+    {
+        // dd($request);
         $fields = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string|min:6',
         ]);
 
-        // Check Email
         $user = User::where('email', $fields['email'])->first();
 
-        // Password Check, if it's wrong display message with status code of 401
-        if(!$user || !Hash::check($fields['password'], $user->password)){
+        if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response([
-                'message' => 'Entered wrong Credentials'
+                'message' => 'Entered wrong Credentials',
             ], 401);
         }
 
         // Create Token
         $token = $user->createToken('simplydeliverytoken')->plainTextToken;
 
-        // Response
         $reponse = [
             'user' => $user,
             'token' => $token,
         ];
 
-        // Return response after successfull login
         return response($reponse, 201);
     }
 
-    // logout User
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $request->user()->tokens()->delete();
         return response()->json([
-            'message' => 'Successfully Logged Out!'
+            'message' => 'Successfully Logged Out!',
         ]);
     }
 }
