@@ -20,19 +20,6 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-
-        // $fields = $request->validate([
-        //     'name' => 'required|alpha',
-        //     'email' => 'required|email|unique:users,email',
-        //     'password' => 'required|min:6|confirmed',
-        // ]);
-
-        // $user = User::create([
-        //     'name' => $fields['name'],
-        //     'email' => $fields['email'],
-        //     'password' => bcrypt($fields['password']),
-        // ]);
-
         $rules = [
             'name' => 'required|alpha',
             'email' => 'required|email|unique:users,email',
@@ -42,6 +29,7 @@ class AuthController extends Controller
         $fields = $request->all();
         $fields['password'] = Hash::make($request->password);
         $user = User::create($fields);
+
         // Create Token
         $token = $user->createToken('simplydeliverytoken')->plainTextToken;
 
@@ -53,9 +41,19 @@ class AuthController extends Controller
         return $this->successResponse($reponse, Response::HTTP_CREATED);
     }
 
+    /**
+     * Obtains and show one user
+     * @return Illuminate\Http\Response
+     */
+    public function show($user)
+    {
+        $user = User::findOrFail($user);
+        return $this->successResponse($user);
+    }
+
     public function login(Request $request)
     {
-        // dd($request);
+
         $fields = $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string|min:6',
@@ -64,9 +62,7 @@ class AuthController extends Controller
         $user = User::where('email', $fields['email'])->first();
 
         if (!$user || !Hash::check($fields['password'], $user->password)) {
-            return response([
-                'message' => 'Entered wrong Credentials',
-            ], 401);
+            return $this->errorResponse("Entered wrong Credentials", Response::HTTP_UNAUTHORIZED);
         }
 
         // Create Token
@@ -77,14 +73,12 @@ class AuthController extends Controller
             'token' => $token,
         ];
 
-        return response($reponse, 201);
+        return $this->successResponse($reponse, 201);
     }
 
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
-        return response()->json([
-            'message' => 'Successfully Logged Out!',
-        ]);
+        return $this->successResponse("SuccessFully Logout!");
     }
 }
