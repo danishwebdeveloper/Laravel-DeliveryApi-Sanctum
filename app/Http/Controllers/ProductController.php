@@ -61,7 +61,6 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-
         $rules = [
             'ItemName' => 'alpha|max:20',
             'ItemPrice' => 'numeric|min:0.10',
