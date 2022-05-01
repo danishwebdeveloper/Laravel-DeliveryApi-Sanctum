@@ -54,14 +54,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
 
-        $fields = $request->validate([
+        $rules = [
             'email' => 'required|string|email',
             'password' => 'required|string|min:6',
-        ]);
+        ];
+        $this->validate($request, $rules);
+        $user = User::where('email', $rules['email'])->first();
 
-        $user = User::where('email', $fields['email'])->first();
-
-        if (!$user || !Hash::check($fields['password'], $user->password)) {
+        if (!$user || !Hash::check($rules['password'], $user->password)) {
             return $this->errorResponse("Entered wrong Credentials", Response::HTTP_UNAUTHORIZED);
         }
 
